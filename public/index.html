@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Railway Proxy</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Railway Web Proxy</h1>
+      <p>Enter a URL and fetch it through your backend proxy endpoint.</p>
+
+      <form id="proxy-form">
+        <label for="url-input">Target URL</label>
+        <div class="row">
+          <input id="url-input" type="url" placeholder="https://example.com" required />
+          <button type="submit">Fetch</button>
+        </div>
+      </form>
+
+      <p id="status"></p>
+      <iframe id="preview" title="Proxied result preview" sandbox="allow-same-origin"></iframe>
+    </main>
+
+    <script src="/script.js" type="module"></script>
+  </body>
+</html>
