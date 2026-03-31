@@ -14,12 +14,16 @@ This project is a simple frontend + backend app you can deploy on Railway.
 - With direct proxying, target sites still see **your Railway server egress IP**.
 - Some targets (Cloudflare/DataDome/etc.) block datacenter IPs and return challenge pages.
 
+If you need hidden egress in production, use a compliant outbound proxy/VPN provider.
+This project does **not** attempt to bypass anti-bot protections.
+
 To reduce blacklisting risk in production:
 
 1. Put the service behind auth (never open proxy to the public).
 2. Add rate limiting + abuse monitoring.
 3. Disable direct egress (`ALLOW_DIRECT_EGRESS=false`) until you have a dedicated outbound proxy/VPN pool.
-4. Use residential/ISP rotating egress from a provider if you need high success on protected sites.
+4. Enable strict mode (`REQUIRE_ANON_EGRESS=true`) to hard-stop traffic until anonymized egress is configured.
+5. Use licensed residential/ISP rotating egress from a provider if you need high success on protected sites.
 
 ## Security notes
 
@@ -43,4 +47,4 @@ Then open `http://localhost:3000`.
 1. Push this repository to GitHub.
 2. Create a new Railway project from the repo.
 3. Railway will run `npm start` automatically.
-4. Set `ALLOW_DIRECT_EGRESS=false` until your outbound proxy strategy is ready.
+4. Set `ALLOW_DIRECT_EGRESS=false` and `REQUIRE_ANON_EGRESS=true` until your outbound proxy strategy is ready.

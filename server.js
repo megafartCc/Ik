@@ -10,6 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.join(__dirname, 'public');
 const allowDirectEgress = process.env.ALLOW_DIRECT_EGRESS !== 'false';
+const requireAnonEgress = process.env.REQUIRE_ANON_EGRESS === 'true';
 
 const mimeTypes = {
   '.html': 'text/html; charset=utf-8',
@@ -146,6 +147,14 @@ const server = http.createServer(async (req, res) => {
   const parsed = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 
   if (req.method === 'GET' && parsed.pathname === '/api/proxy') {
+    if (requireAnonEgress) {
+      sendJson(res, 503, {
+        error:
+          'Anonymous egress is required. Connect this app to a dedicated outbound proxy/VPN gateway before enabling proxy traffic.'
+      });
+      return;
+    }
+
     if (!allowDirectEgress) {
       sendJson(res, 503, {
         error:
@@ -173,8 +182,7 @@ const server = http.createServer(async (req, res) => {
         method: 'GET',
         redirect: 'follow',
         headers: {
-          'user-agent':
-            'Mozilla/5.0 (compatible; RailwayProxyBot/1.0; +https://railway.app)',
+          'user-agent': 'RailwayProxy/1.0 (+https://railway.app)',
           accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
           'accept-language': 'en-US,en;q=0.7',
           pragma: 'no-cache',
@@ -188,7 +196,7 @@ const server = http.createServer(async (req, res) => {
       if (looksLikeAntiBotBlock(response.status, body, contentType)) {
         sendJson(res, 403, {
           error:
-            'Blocked by anti-bot protection on target site. Use a dedicated outbound proxy/VPN pool to avoid exposing your Railway egress IP.'
+            'Blocked by anti-bot protection on target site. Use a compliant outbound proxy provider to avoid exposing your Railway egress IP.'
         });
         return;
       }
