@@ -3,6 +3,14 @@ const input = document.querySelector('#url-input');
 const status = document.querySelector('#status');
 const preview = document.querySelector('#preview');
 
+function tryParseJson(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
 
@@ -16,9 +24,11 @@ form.addEventListener('submit', async (event) => {
   try {
     const response = await fetch(`/api/proxy?url=${encodeURIComponent(target)}`);
     const body = await response.text();
+    const maybeJson = tryParseJson(body);
 
     if (!response.ok) {
-      status.textContent = `Error (${response.status}): ${body}`;
+      const errorMessage = maybeJson?.error || body;
+      status.textContent = `Error (${response.status}): ${errorMessage}`;
       preview.srcdoc = '';
       return;
     }

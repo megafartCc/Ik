@@ -9,6 +9,7 @@ const port = Number(process.env.PORT || 3000);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.join(__dirname, 'public');
+const allowDirectEgress = process.env.ALLOW_DIRECT_EGRESS !== 'false';
 
 const mimeTypes = {
   '.html': 'text/html; charset=utf-8',
@@ -73,6 +74,20 @@ function isBlockedIP(address) {
   return true;
 }
 
+function looksLikeAntiBotBlock(status, body, contentType) {
+  if (status !== 403 || !contentType.includes('text/html')) {
+    return false;
+  }
+
+  const lowered = body.toLowerCase();
+  return (
+    lowered.includes('just a moment') ||
+    lowered.includes('cf_chl_opt') ||
+    lowered.includes('challenge-platform') ||
+    lowered.includes('enable javascript and cookies to continue')
+  );
+}
+
 async function validateTarget(targetUrl) {
   let parsed;
   try {
@@ -102,7 +117,7 @@ async function validateTarget(targetUrl) {
   return parsed.toString();
 }
 
-async function serveStatic(req, res, pathname) {
+async function serveStatic(res, pathname) {
   const safePath = pathname === '/' ? '/index.html' : pathname;
   const resolvedPath = path.resolve(publicDir, `.${safePath}`);
 
@@ -131,6 +146,14 @@ const server = http.createServer(async (req, res) => {
   const parsed = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 
   if (req.method === 'GET' && parsed.pathname === '/api/proxy') {
+    if (!allowDirectEgress) {
+      sendJson(res, 503, {
+        error:
+          'Direct egress is disabled. Configure an outbound proxy network before enabling this endpoint.'
+      });
+      return;
+    }
+
     const targetUrl = parsed.searchParams.get('url');
     if (!targetUrl) {
       sendJson(res, 400, { error: 'Query parameter "url" is required' });
@@ -149,15 +172,30 @@ const server = http.createServer(async (req, res) => {
       const response = await fetch(target, {
         method: 'GET',
         redirect: 'follow',
-        headers: { 'user-agent': 'IkRailwayProxy/1.0' }
+        headers: {
+          'user-agent':
+            'Mozilla/5.0 (compatible; RailwayProxyBot/1.0; +https://railway.app)',
+          accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'accept-language': 'en-US,en;q=0.7',
+          pragma: 'no-cache',
+          'cache-control': 'no-cache'
+        }
       });
 
       const body = await response.text();
       const contentType = response.headers.get('content-type') || 'text/plain; charset=utf-8';
 
+      if (looksLikeAntiBotBlock(response.status, body, contentType)) {
+        sendJson(res, 403, {
+          error:
+            'Blocked by anti-bot protection on target site. Use a dedicated outbound proxy/VPN pool to avoid exposing your Railway egress IP.'
+        });
+        return;
+      }
+
       res.writeHead(response.status, {
         'content-type': contentType,
-        'x-proxy-target': target
+        'x-proxy-mode': 'direct-egress'
       });
       res.end(body);
     } catch {
@@ -168,7 +206,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === 'GET') {
-    await serveStatic(req, res, parsed.pathname);
+    await serveStatic(res, parsed.pathname);
     return;
   }
 
