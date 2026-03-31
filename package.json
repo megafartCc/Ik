@@ -1,0 +1,14 @@
+{
+  "name": "ik-proxy-site",
+  "version": "1.0.0",
+  "description": "Simple web proxy UI and backend for Railway",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

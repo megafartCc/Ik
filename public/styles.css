@@ -1,0 +1,54 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+}
+
+input,
+button {
+  border-radius: 0.6rem;
+  border: 1px solid #334155;
+  padding: 0.65rem 0.8rem;
+  font-size: 1rem;
+}
+
+input {
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+button {
+  background: #3b82f6;
+  color: #fff;
+  cursor: pointer;
+}
+
+#status {
+  min-height: 1.5rem;
+  margin: 1rem 0;
+}
+
+#preview {
+  width: 100%;
+  min-height: 65vh;
+  border: 1px solid #334155;
+  border-radius: 0.75rem;
+  background: #fff;
+}
